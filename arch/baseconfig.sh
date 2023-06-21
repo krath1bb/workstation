@@ -2,7 +2,7 @@
 sudo sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
 sudo pacman -Syu --noconfirm
 
-### Enable AUR repository
+### Enable AUR repository --- ARCH ONLY
 cd ~
 wget https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz
 tar -xvzf yay.tar.gz
@@ -13,9 +13,13 @@ sudo rm -R yay
 yay -Y --gendb
 yay -Syu --devel
 
-### Install Pamac
+### Install Pamac --- ARCH ONLY
 yay -S --noconfirm pamac-all
 yes | pamac upgrade -a
+
+### Install yay --- MANJARO ONLY
+sudo pacman -Syu --noconfirm yay
+
 
 ### Enable SSH
 systemctl enable sshd
@@ -41,7 +45,13 @@ sudo flatpak install -y \
 com.usebottles.bottles \
 com.google.Chrome \
 com.visualstudio.code \
-com.obsproject.Studio
+com.obsproject.Studio \
+io.github.shiftey.Desktop
 
+### Install gnome-keyring for GitHub Desktop
+sudo pacman -Syu --noconfirm gnome-keyring
+
+# Install 
 ### GoXLR App
 # https://github.com/GoXLR-on-Linux/goxlr-utility
+yay -S --noconfirm goxlr-utility
