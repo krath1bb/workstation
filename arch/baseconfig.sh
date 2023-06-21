@@ -47,12 +47,20 @@ com.usebottles.bottles \
 com.google.Chrome \
 com.visualstudio.code \
 com.obsproject.Studio \
-io.github.shiftey.Desktop
+io.github.shiftey.Desktop \
+
+### Audio Setup
+sudo pacman -Syu --noconfirm manjaro-pipewire
+#sudo flatpak install -y org.pipewire.Helvum
+sudo pacman -Syu --noconfirm qpwgraph
+# GoXLR 
+# https://github.com/GoXLR-on-Linux/goxlr-utility
+# GoXLR Profile Directory
+# ~/.local/share/goxlr-utility
+yay -S --noconfirm goxlr-utility
 
 ### Install gnome-keyring for GitHub Desktop
 sudo pacman -Syu --noconfirm gnome-keyring
 
 # Install 
 ### GoXLR App
-# https://github.com/GoXLR-on-Linux/goxlr-utility
-yay -S --noconfirm goxlr-utility
