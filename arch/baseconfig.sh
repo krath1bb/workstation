@@ -32,6 +32,7 @@ curl \
 discord \
 firefox \
 flatpak \
+kio-gdrive \
 man \
 nano \
 net-tools \
