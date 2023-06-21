@@ -39,6 +39,4 @@ wget
 sudo flatpak install -y \
 com.usebottles.bottles \
 com.google.Chrome \
-com.github.Matoking.protontricks \
-net.davidotek.pupgui2 \
 com.visualstudio.code
