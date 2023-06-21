@@ -3,13 +3,13 @@ sudo sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
 sudo pacman -Syu --noconfirm
 
 ### Enable AUR repository
-sudo pacman -Syu --noconfirm --needed base-devel git
 cd ~
-git clone https://aur.archlinux.org/yay.git
-cd ~/yay/
-makepkg -si --noconfirm
+wget https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz
+tar -xvzf yay.tar.gz
+cd yay
+makepkg -csi
 cd ..
-sudo rm -rf /yay/
+sudo rm -R yay
 yay -Y --gendb
 yay -Syu --devel
 
@@ -28,6 +28,7 @@ curl \
 discord \
 firefox \
 flatpak \
+man \
 nano \
 net-tools \
 sudo \
@@ -39,4 +40,8 @@ wget
 sudo flatpak install -y \
 com.usebottles.bottles \
 com.google.Chrome \
-com.visualstudio.code
+com.visualstudio.code \
+com.obsproject.Studio
+
+### GoXLR App
+# https://github.com/GoXLR-on-Linux/goxlr-utility
