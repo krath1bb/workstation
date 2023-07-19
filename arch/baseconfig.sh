@@ -6,7 +6,7 @@ sudo pacman -Syu --noconfirm
 # Add Chaotic AUR Repo
 sudo pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
 sudo pacman-key --lsign-key 3056513887B78AEB
-sudo pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+sudo pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
 sudo tee -a /etc/pacman.conf > /dev/null <<EOT
 
 # Additional Repos
@@ -42,6 +42,15 @@ sudo chown :users /.snapshots
 
 reboot and enjoy snapper
 https://waylonwalker.com/setting-up-snapper-on-arch/
+
+
+https://www.lorenzobettini.it/2023/03/snapper-and-grub-btrfs-in-arch-linux/
+https://www.youtube.com/watch?v=_97JOyC1o2o
+
+sudo pacman -Syu --noconfirm snappersnap-pacgrub-btrfs
+
+
+
 
 
 ### Enable SSH
