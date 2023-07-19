@@ -2,23 +2,46 @@
 sudo sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
 sudo pacman -Syu --noconfirm
 
-### Enable AUR repository --- ARCH ONLY
-cd ~
-wget https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz
-tar -xvzf yay.tar.gz
-cd yay
-makepkg -csi
-cd ..
-sudo rm -R yay
-yay -Y --gendb
-yay -Syu --devel
+### Install Pamac from Chaotic AUR
+# Add Chaotic AUR Repo
+sudo pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
+sudo pacman-key --lsign-key 3056513887B78AEB
+sudo pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+sudo tee -a /etc/pacman.conf > /dev/null <<EOT
 
-### Install Pamac --- ARCH ONLY
-yay -S --noconfirm pamac-all
-yes | pamac upgrade -a
+# Additional Repos
+[chaotic-aur]
+Include = /etc/pacman.d/chaotic-mirrorlist
+EOT
+# Install Pamac
+sudo pacman -Syu --noconfirm pamac-aur
 
-### Install yay --- MANJARO ONLY
-sudo pacman -Syu --noconfirm yay
+# Install Yay
+#sudo pacman -Syu --noconfirm yay
+
+### Install Snapper
+enable grub menu with
+sudo nano /etc/default/grub
+
+change in:
+GRUB_TIMEOUT_STYLE=menu
+save and close
+sudo update grub
+
+after that install following:
+sudo pacman -Syu --noconfirm btrfs-assistant snapper-support snapper-tools 
+#snapper
+#grub-btrfs 
+#snap-pac
+
+create first snap with:
+sudo snapper -c root create --description “initial snapshot”
+
+sudo chmod a+rx /.snapshots
+sudo chown :users /.snapshots
+
+reboot and enjoy snapper
+https://waylonwalker.com/setting-up-snapper-on-arch/
 
 
 ### Enable SSH
@@ -27,40 +50,44 @@ systemctl start sshd
 
 ### Install general packages
 sudo pacman -Syu --needed --noconfirm \
+base-devel \
 bash-completion \
 curl \
-discord \
-firefox \
 flatpak \
-kio-gdrive \
 man \
-nano \
+#nano \
 net-tools \
-sudo \
-vim \
+#sudo \
+#vim \
 vlc \
-wget
+#wget
+
+#kio-gdrive \
+#discord \
+#firefox \
 
 ### Install general flatpaks
+# Bottles, Chrome, Discord, VS Code, OBS, GitHub Desktop
 sudo flatpak install -y \
 com.usebottles.bottles \
 com.google.Chrome \
+com.discordapp.Discord \
 com.visualstudio.code \
 com.obsproject.Studio \
-io.github.shiftey.Desktop \
+io.github.shiftey.Desktop
 
 ### Audio Setup
-sudo pacman -Syu --noconfirm manjaro-pipewire
+#sudo pacman -Syu --noconfirm manjaro-pipewire
 #sudo flatpak install -y org.pipewire.Helvum
-sudo pacman -Syu --noconfirm qpwgraph
+#sudo pacman -Syu --noconfirm qpwgraph
 # GoXLR 
 # https://github.com/GoXLR-on-Linux/goxlr-utility
 # GoXLR Profile Directory
 # ~/.local/share/goxlr-utility
-yay -S --noconfirm goxlr-utility
+#yay -S --noconfirm goxlr-utility
 
 ### Install gnome-keyring for GitHub Desktop
-sudo pacman -Syu --noconfirm gnome-keyring
+#sudo pacman -Syu --noconfirm gnome-keyring
 
 # Install 
 ### GoXLR App
