@@ -1,24 +1,25 @@
 ### Add Chaotic AUR repository
-sudo pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
-sudo pacman-key --lsign-key 3056513887B78AEB
-sudo pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
-sudo tee -a /etc/pacman.conf > /dev/null <<EOT
+#sudo pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
+#sudo pacman-key --lsign-key 3056513887B78AEB
+#sudo pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+#sudo tee -a /etc/pacman.conf > /dev/null <<EOT
 
 # Additional Repos
-[chaotic-aur]
-Include = /etc/pacman.d/chaotic-mirrorlist
-EOT
+#[chaotic-aur]
+#Include = /etc/pacman.d/chaotic-mirrorlist
+#EOT
 
 ### Install Snapper
 # snapper-support = snapper, grub-btrfs, snap-pac
 # snapper-gui
 sudo pacman -Syu --noconfirm snapper-support btrfs-assistant inotify-tools snapper-gui
-sudo umount /.snapshots; sudo rm -r /.snapshots/
+sudo umount /.snapshots
+sudo rm -r /.snapshots/
 # Create Snapper config files
 sudo snapper -c root create-config /
 sudo snapper -c home create-config /home
 sudo snapper -c var create-config /var
-sudo snapper -c data create-config /data
+#sudo snapper -c data create-config /data
 sudo btrfs subvolume delete /.snapshots
 sudo mkdir /.snapshots; sudo mount -a
 # Validate root @ ID is 256
@@ -76,11 +77,10 @@ sudo pacman -Syu --needed --noconfirm \
 game-devices-udev \
 flatpak \
 goxlr-utility \
-pamac-aur \
+pamac-all \
 vim
-#kio-gdrive \
-#discord \
-#firefox \
+#kio-gdrive
+
 
 ### Install general flatpaks
 # Chrome, Discord, GitHub Desktop, VS Code, Protontricks, Protonup-QT, Lutris, Wine
@@ -93,12 +93,13 @@ com.github.Matoking.protontricks \
 net.davidotek.pupgui2 \
 net.lutris.Lutris \
 com.valvesoftware.Steam \
-org.winehq.Wine  ### REQUIRES USER INTERACTION
+org.winehq.Wine
 
 # Configure Steam data directory
 flatpak override --user com.valvesoftware.Steam --filesystem=/data/Games
 
 # Autostart Steam
+mkdir ~/.config/autostart
 cp -L "/var/lib/flatpak/exports/share/applications/com.valvesoftware.Steam.desktop" ~/.config/autostart/
 sudo sed -i 's:@@u %U @@:-silent:g' ~/.config/autostart/com.valvesoftware.Steam.desktop
 
@@ -128,8 +129,9 @@ EOT
 
 
 
-TODO:
-Install lutris-ge-proton from protonup-qt
-Install ge-proton for steam from protonup-qt
-Pamac - Enable AUR
-Enable flatpaks in pamac
+#TODO:
+#Install lutris-ge-proton from protonup-qt
+#Install ge-proton for steam from protonup-qt
+#Pamac - Enable AUR
+#Enable flatpaks in pamac
+#patchbay pipewire
