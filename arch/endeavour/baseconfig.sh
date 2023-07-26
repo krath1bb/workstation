@@ -1,17 +1,15 @@
 ### Add Chaotic AUR repository
-#sudo pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
-#sudo pacman-key --lsign-key 3056513887B78AEB
-#sudo pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
-#sudo tee -a /etc/pacman.conf > /dev/null <<EOT
+sudo pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
+sudo pacman-key --lsign-key 3056513887B78AEB
+sudo pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+sudo tee -a /etc/pacman.conf > /dev/null <<EOT
 
 # Additional Repos
-#[chaotic-aur]
-#Include = /etc/pacman.d/chaotic-mirrorlist
-#EOT
+[chaotic-aur]
+Include = /etc/pacman.d/chaotic-mirrorlist
+EOT
 
 ### Install Snapper
-# snapper-support = snapper, grub-btrfs, snap-pac
-# snapper-gui
 sudo pacman -Syu --noconfirm snapper-support btrfs-assistant inotify-tools snapper-gui
 sudo umount /.snapshots
 sudo rm -r /.snapshots/
@@ -35,7 +33,7 @@ sudo sed -i 's:TIMELINE_LIMIT_YEARLY="10":TIMELINE_LIMIT_YEARLY="0":g' /etc/snap
 sudo chown -R :wheel /.snapshots/
 sudo chown -R :wheel /home/.snapshots/
 sudo chown -R :wheel /var/.snapshots/
-sudo chown -R :wheel /data/.snapshots/
+#sudo chown -R :wheel /data/.snapshots/
 
 # Enable snapshot cleanups
 sudo systemctl enable --now snapper-timeline.timer
