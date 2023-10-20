@@ -7,6 +7,8 @@ choco install -y adobereader amd-ryzen-chipset autodesk-fusion360 cpu-z cygwin d
 ### Enable Hyper-V
 #Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
 
+### Disable Password Expiration Windows 11
+wmic UserAccount set PasswordExpires=False
 
 ### Manual Downloads
 # Go XLR
