@@ -4,11 +4,11 @@ Set-ExecutionPolicy Bypass -Scope CurrentUser -Force; [System.Net.ServicePointMa
 
 
 ### Install Base Chocolatey Packages
-choco install -y adobereader autodesk-fusion360 bambustudio brave cpu-z cygwin displaycal everything googledrive hwinfo orcaslicer revo-uninstaller rpi-imager rufus tailscale vlc vscode winrar winscp wiztree
+choco install -y adobereader autodesk-fusion360 bambustudio brave cpu-z cygwin everything googledrive hwinfo orcaslicer revo-uninstaller rpi-imager rufus tailscale vlc vscode winrar winscp wiztree
 # git github-desktop retroarch
 
 ### Misc Chocolatey Packages
-#choco install -y icue lghub msiafterburner
+#choco install -y icue lghub msiafterburner displaycal
 
 ### Install Gaming Chocolatey Packages
 # choco install -y discord epicgameslauncher steam
