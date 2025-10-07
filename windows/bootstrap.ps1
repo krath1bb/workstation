@@ -36,9 +36,6 @@ Stop-Process -Name explorer -Force
 Get-LocalUser | Where-Object { -not $_.PasswordNeverExpires } |
   Set-LocalUser -PasswordNeverExpires $true
 
-### Debloat
-iwr -useb 'https://simeononsecurity.com/scripts/windowsoptimizeanddebloat.ps1'|iex
-
 
 
 ### Manual Downloads
@@ -56,3 +53,70 @@ iwr -useb 'https://simeononsecurity.com/scripts/windowsoptimizeanddebloat.ps1'|i
 ### MINING
 # Lock pages in memory
 # gpedit.msc > Computer > Windows Settings > Security Settings > User Rights Assignment > Lock pages in memory
+
+
+###############
+### DEBLOAT ###
+###############
+
+# --- Win11 25H2: Built-in Debloat (official policy) --------------------------
+# Requires elevation. Affects NEW user profiles created after this is applied.
+# Policy key: HKLM\SOFTWARE\Policies\Microsoft\Windows\Appx\RemoveDefaultMicrosoftStorePackages
+
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()
+).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)) { throw "Run elevated." }
+
+$PolicyRoot = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Appx\RemoveDefaultMicrosoftStorePackages'
+
+# Curated inbox apps (adjust as needed)
+$Targets = @(
+  'Clipchamp.Clipchamp',
+  'Microsoft.WindowsFeedbackHub',
+  'Microsoft.BingNews',
+  'Microsoft.Windows.Photos',
+  'Microsoft.MicrosoftSolitaireCollection',
+  'Microsoft.MicrosoftStickyNotes',
+  'MicrosoftTeams','MSTeams',
+  'Microsoft.Todos',
+  'Microsoft.BingWeather',
+  'Microsoft.OutlookForWindows',
+  'Microsoft.Paint',
+  'MicrosoftCorporationII.QuickAssist',
+  'Microsoft.SnippingTool','Microsoft.ScreenSketch',
+  'Microsoft.WindowsCalculator',
+  'Microsoft.WindowsCamera',
+  'Microsoft.ZuneMusic','Microsoft.ZuneVideo','Microsoft.WindowsMediaPlayer',
+  'Microsoft.WindowsSoundRecorder','Microsoft.SoundRecorder',
+  'Microsoft.WindowsTerminal',
+  'Microsoft.XboxApp','Microsoft.XboxGamingOverlay',
+  'Microsoft.XboxIdentityProvider','Microsoft.XboxSpeechToTextOverlay','Microsoft.Xbox.TCUI'
+)
+
+# Resolve PFNs from installed/provisioned packages
+$installed = Get-AppxPackage -AllUsers 2>$null
+$prov      = Get-AppxProvisionedPackage -Online 2>$null
+$pfns = foreach ($name in $Targets | Select-Object -Unique) {
+  ($installed | Where-Object { $_.Name -eq $name -or $_.Name -like "$name*" } | Select-Object -First 1).PackageFamilyName
+} | Where-Object { $_ } | Sort-Object -Unique
+
+# Fallback: try to infer PFNs from provisioned entries where not already resolved
+if ($prov) {
+  $need = $Targets | Where-Object { $pfns -notcontains $_ }
+  foreach ($name in $need) {
+    $hit = $prov | Where-Object { $_.DisplayName -eq $name -or $_.PackageName -like "$name*" } | Select-Object -First 1
+    if ($hit) {
+      # Best-effort second pass against installed by identity name prefix
+      $p = ($installed | Where-Object { $_.Name -like "$name*" } | Select-Object -First 1).PackageFamilyName
+      if ($p) { $pfns += $p }
+    }
+  }
+  $pfns = $pfns | Sort-Object -Unique
+}
+
+# Write policy: one empty subkey per PFN
+New-Item -Path $PolicyRoot -Force | Out-Null
+foreach ($pfn in $pfns) { New-Item -Path (Join-Path $PolicyRoot $pfn) -Force | Out-Null }
+
+# Optional: uncomment to remove everything this block created (revert)
+# Remove-Item -Path $PolicyRoot -Recurse -Force
+# ---------------------------------------------------------------------------
