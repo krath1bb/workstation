@@ -1,14 +1,33 @@
 ### Install Chocolatey
-#Set-ExecutionPolicy Bypass -Scope CurrentUser -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+Set-ExecutionPolicy Bypass -Scope CurrentUser -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-### Install Chocolatey Packages
-choco install -y adobereader amd-ryzen-chipset autodesk-fusion360 cpu-z cygwin discord displaycal epicgameslauncher everything firefox git github-desktop googlechrome googledrive hwinfo icue lghub msiafterburner orcaslicer retroarch revo-uninstaller rpi-imager rufus steam superslicer tailscale vlc vscode winrar winscp wiztree
+
+
+### Install Base Chocolatey Packages
+choco install -y adobereader bambustudio brave cpu-z cygwin displaycal everything googledrive hwinfo orcaslicer revo-uninstaller rpi-imager rufus tailscale vlc vscode winrar winscp wiztree
+# git github-desktop retroarch
+
+### Misc Chocolatey Packages
+#choco install -y icue lghub msiafterburner
+
+###  CAD Chocolatey Packages
+#choco install -y autodesk-fusion360
+
+### Install Gaming Chocolatey Packages
+# choco install -y discord epicgameslauncher steam
+
+### Install Ryzen Chocolatey Packages
+# choco install -y amd-ryzen-chipset
+
+
 
 ### Enable Hyper-V
 #Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
 
 ### Disable Password Expiration Windows 11
 wmic UserAccount set PasswordExpires=False
+
+
 
 ### Manual Downloads
 # Go XLR
