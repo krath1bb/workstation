@@ -21,6 +21,13 @@ choco install -y adobereader bambustudio brave cpu-z cygwin displaycal everythin
 
 
 
+### Debloat
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force
+Get-ChildItem -Recurse *.ps1 | Unblock-File
+powershell.exe -ExecutionPolicy ByPass -File .\sos-optimize-windows.ps1 -cleargpos:$false -installupdates:$false -removebloatware:$true -disabletelemetry:$true -privacy:$true -imagecleanup:$true -diskcompression:$false -updatemanagement:$true -sosbrowsers:$true   
+
+
+
 ### Enable Hyper-V
 #Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
 
