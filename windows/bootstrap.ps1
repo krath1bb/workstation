@@ -128,3 +128,25 @@ if ($pfns -and $pfns.Count) {
 # Optional revert:
 # Remove-Item -Path $PolicyRoot -Recurse -Force
 # ---------------------------------------------------------------------------
+
+# Remove for all existing users (best-effort)
+$Targets = @(
+  'Clipchamp.Clipchamp','Microsoft.WindowsFeedbackHub','Microsoft.BingNews','Microsoft.Windows.Photos',
+  'Microsoft.MicrosoftSolitaireCollection','Microsoft.MicrosoftStickyNotes','MicrosoftTeams','MSTeams',
+  'Microsoft.Todos','Microsoft.BingWeather','Microsoft.OutlookForWindows','Microsoft.Paint',
+  'MicrosoftCorporationII.QuickAssist','Microsoft.SnippingTool','Microsoft.ScreenSketch',
+  'Microsoft.WindowsCalculator','Microsoft.WindowsCamera','Microsoft.ZuneMusic','Microsoft.ZuneVideo',
+  'Microsoft.WindowsMediaPlayer','Microsoft.WindowsSoundRecorder','Microsoft.SoundRecorder',
+  'Microsoft.WindowsTerminal','Microsoft.XboxApp','Microsoft.XboxGamingOverlay',
+  'Microsoft.XboxIdentityProvider','Microsoft.XboxSpeechToTextOverlay','Microsoft.Xbox.TCUI'
+)
+
+# Uninstall per-user instances
+Get-AppxPackage -AllUsers | Where-Object { $Targets -contains $_.Name } | ForEach-Object {
+  try { Remove-AppxPackage -Package $_.PackageFullName -AllUsers -ErrorAction Stop } catch {}
+}
+
+# Remove from provisioning (stops them from being added to *future* profiles even without the policy)
+Get-AppxProvisionedPackage -Online | Where-Object { $Targets -contains $_.DisplayName } | ForEach-Object {
+  try { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName -ErrorAction Stop } catch {}
+}
