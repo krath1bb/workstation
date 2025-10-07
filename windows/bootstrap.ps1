@@ -109,7 +109,7 @@ try {
 # 1) Try Winget silently with agreement flags
 $winget = Get-Command winget -ErrorAction SilentlyContinue
 if ($winget) {
-  try { winget uninstall --id Microsoft.OneDrive -e --silent --accept-source-agreements --accept-package-agreements 2>$null } catch { }
+  try { winget uninstall --id Microsoft.OneDrive -e --silent --accept-source-agreements 2>$null } catch { }
 }
 
 # 2) Fallback to built-in uninstaller (silent)
