@@ -95,8 +95,12 @@ $Targets = @(
 # Resolve PFNs from installed/provisioned packages
 $installed = Get-AppxPackage -AllUsers 2>$null
 $prov      = Get-AppxProvisionedPackage -Online 2>$null
-$pfns = foreach ($name in $Targets | Select-Object -Unique) {
-  ($installed | Where-Object { $_.Name -eq $name -or $_.Name -like "$name*" } | Select-Object -First 1).PackageFamilyName
+
+# FIX: use a pipeline (ForEach-Object) instead of piping from a foreach statement
+$pfns = $Targets | Select-Object -Unique | ForEach-Object {
+  $name = $_
+  ($installed | Where-Object { $_.Name -eq $name -or $_.Name -like "$name*" } |
+    Select-Object -First 1).PackageFamilyName
 } | Where-Object { $_ } | Sort-Object -Unique
 
 # Fallback: try to infer PFNs from provisioned entries where not already resolved
@@ -105,7 +109,6 @@ if ($prov) {
   foreach ($name in $need) {
     $hit = $prov | Where-Object { $_.DisplayName -eq $name -or $_.PackageName -like "$name*" } | Select-Object -First 1
     if ($hit) {
-      # Best-effort second pass against installed by identity name prefix
       $p = ($installed | Where-Object { $_.Name -like "$name*" } | Select-Object -First 1).PackageFamilyName
       if ($p) { $pfns += $p }
     }
@@ -114,9 +117,12 @@ if ($prov) {
 }
 
 # Write policy: one empty subkey per PFN
-New-Item -Path $PolicyRoot -Force | Out-Null
-foreach ($pfn in $pfns) { New-Item -Path (Join-Path $PolicyRoot $pfn) -Force | Out-Null }
-
-# Optional: uncomment to remove everything this block created (revert)
+if ($pfns -and $pfns.Count) {
+  New-Item -Path $PolicyRoot -Force | Out-Null
+  foreach ($pfn in $pfns) {
+    New-Item -Path (Join-Path $PolicyRoot $pfn) -Force | Out-Null
+  }
+}
+# Optional revert:
 # Remove-Item -Path $PolicyRoot -Recurse -Force
 # ---------------------------------------------------------------------------
