@@ -16,28 +16,6 @@ choco install -y adobereader autodesk-fusion360 bambustudio brave cpu-z cygwin e
 ### Install Ryzen Chocolatey Packages
 # choco install -y amd-ryzen-chipset
 
-
-
-### Enable Hyper-V
-#Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
-
-
-
-### Classic Context Menu
-# Create the key and set empty default value
-reg add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve
-
-# Restart File Explorer to apply
-Stop-Process -Name explorer -Force
-
-
-
-### Disable Password Expiration Windows 11
-Get-LocalUser | Where-Object { -not $_.PasswordNeverExpires } |
-  Set-LocalUser -PasswordNeverExpires $true
-
-
-
 ### Manual Downloads
 # Go XLR
 # Battle.NET
@@ -56,9 +34,43 @@ Get-LocalUser | Where-Object { -not $_.PasswordNeverExpires } |
 
 
 
-################
-# Win11 Debloat (Unattended)
-################
+##################
+### POWERSHELL ###
+##################
+
+### Classic Context Menu
+# Create the key and set empty default value
+reg add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve
+# Restart File Explorer to apply
+Stop-Process -Name explorer -Force
+
+### Disable Password Expiration Windows 11
+Get-LocalUser | Where-Object { -not $_.PasswordNeverExpires } |
+  Set-LocalUser -PasswordNeverExpires $true
+
+### Left align taskbar
+# 0 = left, 1 = center
+New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Force | Out-Null
+New-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' `
+  -Name 'TaskbarAl' -PropertyType DWord -Value 0 -Force | Out-Null
+
+# Apply
+Stop-Process -Name explorer -Force
+
+### Disbable News/Weather
+New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Force | Out-Null
+New-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' `
+  -Name 'TaskbarDa' -PropertyType DWord -Value 0 -Force | Out-Null
+
+Stop-Process -Name explorer -Force
+
+
+
+
+
+#####################
+### Win11 Debloat ###
+#####################
 
 # Require elevation
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()
