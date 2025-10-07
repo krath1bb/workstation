@@ -96,14 +96,15 @@ $Targets = @(
 $installed = Get-AppxPackage -AllUsers 2>$null
 $prov      = Get-AppxProvisionedPackage -Online 2>$null
 
-# FIX: use a pipeline (ForEach-Object) instead of piping from a foreach statement
+# No line-leading pipes; build in steps
 $pfns = $Targets | Select-Object -Unique | ForEach-Object {
   $name = $_
-  ($installed | Where-Object { $_.Name -eq $name -or $_.Name -like "$name*" } |
-    Select-Object -First 1).PackageFamilyName
-} | Where-Object { $_ } | Sort-Object -Unique
+  ($installed | Where-Object { $_.Name -eq $name -or $_.Name -like "$name*" } | Select-Object -First 1).PackageFamilyName
+}
+$pfns = $pfns | Where-Object { $_ }
+$pfns = $pfns | Sort-Object -Unique
 
-# Fallback: try to infer PFNs from provisioned entries where not already resolved
+# Fallback: infer PFNs from provisioned entries where not already resolved
 if ($prov) {
   $need = $Targets | Where-Object { $pfns -notcontains $_ }
   foreach ($name in $need) {
@@ -123,6 +124,7 @@ if ($pfns -and $pfns.Count) {
     New-Item -Path (Join-Path $PolicyRoot $pfn) -Force | Out-Null
   }
 }
+
 # Optional revert:
 # Remove-Item -Path $PolicyRoot -Recurse -Force
 # ---------------------------------------------------------------------------
