@@ -52,11 +52,28 @@ if ($IsAdmin) {
       ForEach-Object { Set-LocalUser -Name $_.Name -PasswordNeverExpires $true }
 }
 
-# Taskbar: left align + hide Widgets (per user)
+# Taskbar mod: Left align + hide Widgets, Task View, and Search (per user)
+###############
 $adv = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
 New-Item -Path $adv -Force | Out-Null
-New-ItemProperty -Path $adv -Name 'TaskbarAl' -PropertyType DWord -Value 0 -Force | Out-Null  # 0=left, 1=center
-New-ItemProperty -Path $adv -Name 'TaskbarDa' -PropertyType DWord -Value 0 -Force | Out-Null  # 0=hidden
+
+# Left align (0 = left, 1 = center)
+New-ItemProperty -Path $adv -Name 'TaskbarAl' -PropertyType DWord -Value 0 -Force | Out-Null
+
+# Hide Widgets (0 = hide)
+New-ItemProperty -Path $adv -Name 'TaskbarDa' -PropertyType DWord -Value 0 -Force | Out-Null
+
+# Hide Task View (0 = hide)
+New-ItemProperty -Path $adv -Name 'ShowTaskViewButton' -PropertyType DWord -Value 0 -Force | Out-Null
+
+# Hide Search (Win11)
+$searchKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Search'
+New-Item -Path $searchKey -Force | Out-Null
+New-ItemProperty -Path $searchKey -Name 'SearchboxTaskbarMode' -PropertyType DWord -Value 0 -Force | Out-Null  # 0=hide
+
+# Compatibility for some builds (harmless on others)
+New-ItemProperty -Path $adv -Name 'TaskbarSearch' -PropertyType DWord -Value 0 -Force | Out-Null  # 0=hide
+
 
 # Apply changes (restart Explorer once)
 try { Stop-Process -Name explorer -Force } catch { }
