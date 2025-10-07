@@ -18,19 +18,26 @@ choco install -y adobereader autodesk-fusion360 bambustudio brave cpu-z cygwin e
 
 
 
-### Debloat
-iwr -useb 'https://simeononsecurity.com/scripts/windowsoptimizeanddebloat.ps1'|iex
-
-
-
 ### Enable Hyper-V
 #Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+
+
+
+### Classic Context Menu
+# Create the key and set empty default value
+reg add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve
+
+# Restart File Explorer to apply
+Stop-Process -Name explorer -Force
 
 
 
 ### Disable Password Expiration Windows 11
 Get-LocalUser | Where-Object { -not $_.PasswordNeverExpires } |
   Set-LocalUser -PasswordNeverExpires $true
+
+### Debloat
+iwr -useb 'https://simeononsecurity.com/scripts/windowsoptimizeanddebloat.ps1'|iex
 
 
 
