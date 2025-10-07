@@ -38,26 +38,28 @@ choco install -y adobereader autodesk-fusion360 bambustudio brave cpu-z cygwin e
 ### POWERSHELL ###
 ##################
 
-### Classic Context Menu
+# Classic Context Menu (per user)
 # Create the key and set empty default value
 reg add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve
-# Restart File Explorer to apply
-Stop-Process -Name explorer -Force
 
-### Disable Password Expiration Windows 11
-Get-LocalUser | Where-Object { -not $_.PasswordNeverExpires } |
-  Set-LocalUser -PasswordNeverExpires $true
+# Disable Password Expiration (local accounts)
+# Requires elevation; safely skipped if not admin. Has no effect on AAD/Domain policy-managed accounts.
+$IsAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()
+).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+if ($IsAdmin) {
+    Get-LocalUser |
+      Where-Object { $_.Enabled -and -not $_.PasswordNeverExpires } |
+      ForEach-Object { Set-LocalUser -Name $_.Name -PasswordNeverExpires $true }
+}
 
-# Left align + hide Widgets button for the current user
-New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Force | Out-Null
-New-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Name 'TaskbarAl' -PropertyType DWord -Value 0 -Force | Out-Null  # 0=left, 1=center
-New-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Name 'TaskbarDa' -PropertyType DWord -Value 0 -Force | Out-Null  # 0=hidden
+# Taskbar: left align + hide Widgets (per user)
+$adv = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+New-Item -Path $adv -Force | Out-Null
+New-ItemProperty -Path $adv -Name 'TaskbarAl' -PropertyType DWord -Value 0 -Force | Out-Null  # 0=left, 1=center
+New-ItemProperty -Path $adv -Name 'TaskbarDa' -PropertyType DWord -Value 0 -Force | Out-Null  # 0=hidden
 
-# Apply once at the end
-Stop-Process -Name explorer -Force
-
-
-
+# Apply changes (restart Explorer once)
+try { Stop-Process -Name explorer -Force } catch { }
 
 
 
