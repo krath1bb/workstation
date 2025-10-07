@@ -80,8 +80,9 @@ if (Get-ItemProperty -Path $adv -Name 'TaskbarSearch' -ErrorAction SilentlyConti
 # Optional: disable dynamic search box experiments
 New-ItemProperty -Path $srch -Name 'IsDynamicSearchBoxEnabled' -PropertyType DWord -Value 0 -Force | Out-Null
 
-# Apply changes (restart Explorer once)
-try { Stop-Process -Name explorer -Force } catch { }
+# Apply once at the end
+Get-Process -Name 'SearchHost' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Stop-Process -Name explorer -Force
 
 
 
