@@ -53,11 +53,13 @@ if ($IsAdmin) {
 }
 
 # Taskbar mod: Left align + hide Widgets, Task View, and Search (per user)
-###############
 $adv = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
-New-Item -Path $adv -Force | Out-Null
+$srch = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Search'
 
-# Left align (0 = left, 1 = center)
+New-Item -Path $adv -Force | Out-Null
+New-Item -Path $srch -Force | Out-Null
+
+# Left align (0 = left)
 New-ItemProperty -Path $adv -Name 'TaskbarAl' -PropertyType DWord -Value 0 -Force | Out-Null
 
 # Hide Widgets (0 = hide)
@@ -66,14 +68,17 @@ New-ItemProperty -Path $adv -Name 'TaskbarDa' -PropertyType DWord -Value 0 -Forc
 # Hide Task View (0 = hide)
 New-ItemProperty -Path $adv -Name 'ShowTaskViewButton' -PropertyType DWord -Value 0 -Force | Out-Null
 
-# Hide Search (Win11)
-$searchKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Search'
-New-Item -Path $searchKey -Force | Out-Null
-New-ItemProperty -Path $searchKey -Name 'SearchboxTaskbarMode' -PropertyType DWord -Value 0 -Force | Out-Null  # 0=hide
+# Hide Search (Windows 11 modern setting)
+# 0 = Hidden, 1 = Icon only, 2 = Icon & label, 3 = Search box
+New-ItemProperty -Path $srch -Name 'SearchboxTaskbarMode' -PropertyType DWord -Value 0 -Force | Out-Null
 
-# Compatibility for some builds (harmless on others)
-New-ItemProperty -Path $adv -Name 'TaskbarSearch' -PropertyType DWord -Value 0 -Force | Out-Null  # 0=hide
+# Remove legacy key that can conflict on some builds
+if (Get-ItemProperty -Path $adv -Name 'TaskbarSearch' -ErrorAction SilentlyContinue) {
+    Remove-ItemProperty -Path $adv -Name 'TaskbarSearch' -ErrorAction SilentlyContinue
+}
 
+# Optional: disable dynamic search box experiments
+New-ItemProperty -Path $srch -Name 'IsDynamicSearchBoxEnabled' -PropertyType DWord -Value 0 -Force | Out-Null
 
 # Apply changes (restart Explorer once)
 try { Stop-Process -Name explorer -Force } catch { }
