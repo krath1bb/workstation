@@ -48,21 +48,14 @@ Stop-Process -Name explorer -Force
 Get-LocalUser | Where-Object { -not $_.PasswordNeverExpires } |
   Set-LocalUser -PasswordNeverExpires $true
 
-### Left align taskbar
-# 0 = left, 1 = center
+# Left align + hide Widgets button for the current user
 New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Force | Out-Null
-New-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' `
-  -Name 'TaskbarAl' -PropertyType DWord -Value 0 -Force | Out-Null
+New-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Name 'TaskbarAl' -PropertyType DWord -Value 0 -Force | Out-Null  # 0=left, 1=center
+New-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Name 'TaskbarDa' -PropertyType DWord -Value 0 -Force | Out-Null  # 0=hidden
 
-# Apply
+# Apply once at the end
 Stop-Process -Name explorer -Force
 
-### Disbable News/Weather
-New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Force | Out-Null
-New-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' `
-  -Name 'TaskbarDa' -PropertyType DWord -Value 0 -Force | Out-Null
-
-Stop-Process -Name explorer -Force
 
 
 
