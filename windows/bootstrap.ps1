@@ -55,81 +55,15 @@ Get-LocalUser | Where-Object { -not $_.PasswordNeverExpires } |
 # gpedit.msc > Computer > Windows Settings > Security Settings > User Rights Assignment > Lock pages in memory
 
 
-###############
-### DEBLOAT ###
-###############
+################
+# Win11 Debloat
+################
 
-# --- Win11 25H2: Built-in Debloat (official policy) --------------------------
-# Requires elevation. Affects NEW user profiles created after this is applied.
-# Policy key: HKLM\SOFTWARE\Policies\Microsoft\Windows\Appx\RemoveDefaultMicrosoftStorePackages
-
+# Require elevation
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()
 ).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)) { throw "Run elevated." }
 
-$PolicyRoot = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Appx\RemoveDefaultMicrosoftStorePackages'
-
-# Curated inbox apps (adjust as needed)
-$Targets = @(
-  'Clipchamp.Clipchamp',
-  'Microsoft.WindowsFeedbackHub',
-  'Microsoft.BingNews',
-  'Microsoft.Windows.Photos',
-  'Microsoft.MicrosoftSolitaireCollection',
-  'Microsoft.MicrosoftStickyNotes',
-  'MicrosoftTeams','MSTeams',
-  'Microsoft.Todos',
-  'Microsoft.BingWeather',
-  'Microsoft.OutlookForWindows',
-  'Microsoft.Paint',
-  'MicrosoftCorporationII.QuickAssist',
-  'Microsoft.SnippingTool','Microsoft.ScreenSketch',
-  'Microsoft.WindowsCalculator',
-  'Microsoft.WindowsCamera',
-  'Microsoft.ZuneMusic','Microsoft.ZuneVideo','Microsoft.WindowsMediaPlayer',
-  'Microsoft.WindowsSoundRecorder','Microsoft.SoundRecorder',
-  'Microsoft.WindowsTerminal',
-  'Microsoft.XboxApp','Microsoft.XboxGamingOverlay',
-  'Microsoft.XboxIdentityProvider','Microsoft.XboxSpeechToTextOverlay','Microsoft.Xbox.TCUI'
-)
-
-# Resolve PFNs from installed/provisioned packages
-$installed = Get-AppxPackage -AllUsers 2>$null
-$prov      = Get-AppxProvisionedPackage -Online 2>$null
-
-# No line-leading pipes; build in steps
-$pfns = $Targets | Select-Object -Unique | ForEach-Object {
-  $name = $_
-  ($installed | Where-Object { $_.Name -eq $name -or $_.Name -like "$name*" } | Select-Object -First 1).PackageFamilyName
-}
-$pfns = $pfns | Where-Object { $_ }
-$pfns = $pfns | Sort-Object -Unique
-
-# Fallback: infer PFNs from provisioned entries where not already resolved
-if ($prov) {
-  $need = $Targets | Where-Object { $pfns -notcontains $_ }
-  foreach ($name in $need) {
-    $hit = $prov | Where-Object { $_.DisplayName -eq $name -or $_.PackageName -like "$name*" } | Select-Object -First 1
-    if ($hit) {
-      $p = ($installed | Where-Object { $_.Name -like "$name*" } | Select-Object -First 1).PackageFamilyName
-      if ($p) { $pfns += $p }
-    }
-  }
-  $pfns = $pfns | Sort-Object -Unique
-}
-
-# Write policy: one empty subkey per PFN
-if ($pfns -and $pfns.Count) {
-  New-Item -Path $PolicyRoot -Force | Out-Null
-  foreach ($pfn in $pfns) {
-    New-Item -Path (Join-Path $PolicyRoot $pfn) -Force | Out-Null
-  }
-}
-
-# Optional revert:
-# Remove-Item -Path $PolicyRoot -Recurse -Force
-# ---------------------------------------------------------------------------
-
-# Remove for all existing users (best-effort)
+# Target Appx (Store) apps – add/remove to taste
 $Targets = @(
   'Clipchamp.Clipchamp','Microsoft.WindowsFeedbackHub','Microsoft.BingNews','Microsoft.Windows.Photos',
   'Microsoft.MicrosoftSolitaireCollection','Microsoft.MicrosoftStickyNotes','MicrosoftTeams','MSTeams',
@@ -138,15 +72,62 @@ $Targets = @(
   'Microsoft.WindowsCalculator','Microsoft.WindowsCamera','Microsoft.ZuneMusic','Microsoft.ZuneVideo',
   'Microsoft.WindowsMediaPlayer','Microsoft.WindowsSoundRecorder','Microsoft.SoundRecorder',
   'Microsoft.WindowsTerminal','Microsoft.XboxApp','Microsoft.XboxGamingOverlay',
-  'Microsoft.XboxIdentityProvider','Microsoft.XboxSpeechToTextOverlay','Microsoft.Xbox.TCUI'
+  'Microsoft.XboxIdentityProvider','Microsoft.XboxSpeechToTextOverlay','Microsoft.Xbox.TCUI',
+  'Microsoft.GetHelp','Microsoft.Getstarted','Microsoft.YourPhone','Microsoft.LinkedIn','Microsoft.LinkedInBeta'
 )
 
-# Uninstall per-user instances
-Get-AppxPackage -AllUsers | Where-Object { $Targets -contains $_.Name } | ForEach-Object {
-  try { Remove-AppxPackage -Package $_.PackageFullName -AllUsers -ErrorAction Stop } catch {}
+Write-Host "Removing selected Appx packages for existing users..." 
+
+# Uninstall per-user instances (best effort)
+Get-AppxPackage -AllUsers |
+  Where-Object { $Targets -contains $_.Name } |
+  ForEach-Object {
+    try {
+      Remove-AppxPackage -Package $_.PackageFullName -AllUsers -ErrorAction Stop
+    } catch { }
+  }
+
+Write-Host "De-provisioning selected Appx packages from the image..."
+
+# Remove from provisioning so they do not install for future profiles
+Get-AppxProvisionedPackage -Online |
+  Where-Object {
+    # Match by DisplayName or by prefix of PackageName to be resilient across builds
+    $Targets -contains $_.DisplayName -or $Targets | ForEach-Object { $_ } | Where-Object { $_ -and $_ -ne '' -and $_ -like "$($_)*" } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+  } |
+  ForEach-Object {
+    try {
+      Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName -ErrorAction Stop | Out-Null
+    } catch { }
+  }
+
+#######################
+# Remove OneDrive (Win32)
+#######################
+
+# Try winget (quiet)
+try { winget uninstall --id Microsoft.OneDrive -e --silent 2>$null } catch { }
+
+# Fallback: built-in uninstaller
+$exe = if (Test-Path "$env:SystemRoot\SysWOW64\OneDriveSetup.exe") {
+    "$env:SystemRoot\SysWOW64\OneDriveSetup.exe"
+} elseif (Test-Path "$env:SystemRoot\System32\OneDriveSetup.exe") {
+    "$env:SystemRoot\System32\OneDriveSetup.exe"
+} else { $null }
+
+if ($exe) {
+  try { Start-Process $exe '/uninstall' -Wait -WindowStyle Hidden } catch { }
 }
 
-# Remove from provisioning (stops them from being added to *future* profiles even without the policy)
-Get-AppxProvisionedPackage -Online | Where-Object { $Targets -contains $_.DisplayName } | ForEach-Object {
-  try { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName -ErrorAction Stop } catch {}
+# Clean common leftovers (best effort)
+$paths = @(
+  "$env:LOCALAPPDATA\Microsoft\OneDrive",
+  "$env:ProgramData\Microsoft OneDrive",
+  "$env:SystemDrive\OneDriveTemp"
+)
+foreach ($p in $paths) {
+  try { if (Test-Path $p) { Remove-Item $p -Recurse -Force -ErrorAction SilentlyContinue } } catch { }
 }
+
+Write-Host "Debloat completed."
+
