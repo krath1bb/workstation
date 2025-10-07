@@ -68,20 +68,7 @@ New-ItemProperty -Path $adv -Name 'TaskbarDa' -PropertyType DWord -Value 0 -Forc
 # Hide Task View (0 = hide)
 New-ItemProperty -Path $adv -Name 'ShowTaskViewButton' -PropertyType DWord -Value 0 -Force | Out-Null
 
-# Hide Search (Windows 11 modern setting)
-# 0 = Hidden, 1 = Icon only, 2 = Icon & label, 3 = Search box
-New-ItemProperty -Path $srch -Name 'SearchboxTaskbarMode' -PropertyType DWord -Value 0 -Force | Out-Null
-
-# Remove legacy key that can conflict on some builds
-if (Get-ItemProperty -Path $adv -Name 'TaskbarSearch' -ErrorAction SilentlyContinue) {
-    Remove-ItemProperty -Path $adv -Name 'TaskbarSearch' -ErrorAction SilentlyContinue
-}
-
-# Optional: disable dynamic search box experiments
-New-ItemProperty -Path $srch -Name 'IsDynamicSearchBoxEnabled' -PropertyType DWord -Value 0 -Force | Out-Null
-
 # Apply once at the end
-Get-Process -Name 'SearchHost' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Stop-Process -Name explorer -Force
 
 
