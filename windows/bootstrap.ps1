@@ -4,14 +4,11 @@ Set-ExecutionPolicy Bypass -Scope CurrentUser -Force; [System.Net.ServicePointMa
 
 
 ### Install Base Chocolatey Packages
-choco install -y adobereader bambustudio brave cpu-z cygwin displaycal everything googledrive hwinfo orcaslicer revo-uninstaller rpi-imager rufus tailscale vlc vscode winrar winscp wiztree
+choco install -y adobereader autodesk-fusion360 bambustudio brave cpu-z cygwin displaycal everything googledrive hwinfo orcaslicer revo-uninstaller rpi-imager rufus tailscale vlc vscode winrar winscp wiztree
 # git github-desktop retroarch
 
 ### Misc Chocolatey Packages
 #choco install -y icue lghub msiafterburner
-
-###  CAD Chocolatey Packages
-#choco install -y autodesk-fusion360
 
 ### Install Gaming Chocolatey Packages
 # choco install -y discord epicgameslauncher steam
@@ -22,17 +19,18 @@ choco install -y adobereader bambustudio brave cpu-z cygwin displaycal everythin
 
 
 ### Debloat
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force
-Get-ChildItem -Recurse *.ps1 | Unblock-File
-powershell.exe -ExecutionPolicy ByPass -File .\sos-optimize-windows.ps1 -cleargpos:$false -installupdates:$false -removebloatware:$true -disabletelemetry:$true -privacy:$true -imagecleanup:$true -diskcompression:$false -updatemanagement:$true -sosbrowsers:$true   
+iwr -useb 'https://simeononsecurity.com/scripts/windowsoptimizeanddebloat.ps1'|iex
 
 
 
 ### Enable Hyper-V
 #Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
 
+
+
 ### Disable Password Expiration Windows 11
-wmic UserAccount set PasswordExpires=False
+Get-LocalUser | Where-Object { -not $_.PasswordNeverExpires } |
+  Set-LocalUser -PasswordNeverExpires $true
 
 
 
