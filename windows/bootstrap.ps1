@@ -55,15 +55,19 @@ Get-LocalUser | Where-Object { -not $_.PasswordNeverExpires } |
 # gpedit.msc > Computer > Windows Settings > Security Settings > User Rights Assignment > Lock pages in memory
 
 
+
 ################
-# Win11 Debloat
+# Win11 Debloat (Unattended)
 ################
 
 # Require elevation
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()
-).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)) { throw "Run elevated." }
+).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)) { exit 1 }
 
-# Target Appx (Store) apps – add/remove to taste
+# Reduce noise, keep going on failures
+$ProgressPreference = 'SilentlyContinue'
+
+# Target Appx (Store) apps – adjust as needed
 $Targets = @(
   'Clipchamp.Clipchamp','Microsoft.WindowsFeedbackHub','Microsoft.BingNews','Microsoft.Windows.Photos',
   'Microsoft.MicrosoftSolitaireCollection','Microsoft.MicrosoftStickyNotes','MicrosoftTeams','MSTeams',
@@ -76,39 +80,39 @@ $Targets = @(
   'Microsoft.GetHelp','Microsoft.Getstarted','Microsoft.YourPhone','Microsoft.LinkedIn','Microsoft.LinkedInBeta'
 )
 
-Write-Host "Removing selected Appx packages for existing users..." 
+# --- Remove for existing users (no prompts)
+try {
+  Get-AppxPackage -AllUsers |
+    Where-Object { $Targets -contains $_.Name } |
+    ForEach-Object {
+      try { Remove-AppxPackage -Package $_.PackageFullName -AllUsers -ErrorAction Stop } catch { }
+    }
+} catch { }
 
-# Uninstall per-user instances (best effort)
-Get-AppxPackage -AllUsers |
-  Where-Object { $Targets -contains $_.Name } |
-  ForEach-Object {
-    try {
-      Remove-AppxPackage -Package $_.PackageFullName -AllUsers -ErrorAction Stop
-    } catch { }
+# --- De-provision so future profiles don't get them (no prompts)
+try {
+  $prov = Get-AppxProvisionedPackage -Online
+  if ($prov) {
+    # Match by DisplayName or by IdentityName prefix in PackageName
+    $prov |
+      Where-Object {
+        $Targets -contains $_.DisplayName -or
+        ($Targets | Where-Object { $_ -and $_ -ne '' -and $_ -like ($_.PackageName.Split('_')[0] + '*') }).Count -gt 0
+      } |
+      ForEach-Object {
+        try { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName -ErrorAction Stop | Out-Null } catch { }
+      }
   }
+} catch { }
 
-Write-Host "De-provisioning selected Appx packages from the image..."
+# --- OneDrive (Win32) uninstall (unattended)
+# 1) Try Winget silently with agreement flags
+$winget = Get-Command winget -ErrorAction SilentlyContinue
+if ($winget) {
+  try { winget uninstall --id Microsoft.OneDrive -e --silent --accept-source-agreements --accept-package-agreements 2>$null } catch { }
+}
 
-# Remove from provisioning so they do not install for future profiles
-Get-AppxProvisionedPackage -Online |
-  Where-Object {
-    # Match by DisplayName or by prefix of PackageName to be resilient across builds
-    $Targets -contains $_.DisplayName -or $Targets | ForEach-Object { $_ } | Where-Object { $_ -and $_ -ne '' -and $_ -like "$($_)*" } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
-  } |
-  ForEach-Object {
-    try {
-      Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName -ErrorAction Stop | Out-Null
-    } catch { }
-  }
-
-#######################
-# Remove OneDrive (Win32)
-#######################
-
-# Try winget (quiet)
-try { winget uninstall --id Microsoft.OneDrive -e --silent 2>$null } catch { }
-
-# Fallback: built-in uninstaller
+# 2) Fallback to built-in uninstaller (silent)
 $exe = if (Test-Path "$env:SystemRoot\SysWOW64\OneDriveSetup.exe") {
     "$env:SystemRoot\SysWOW64\OneDriveSetup.exe"
 } elseif (Test-Path "$env:SystemRoot\System32\OneDriveSetup.exe") {
@@ -119,7 +123,7 @@ if ($exe) {
   try { Start-Process $exe '/uninstall' -Wait -WindowStyle Hidden } catch { }
 }
 
-# Clean common leftovers (best effort)
+# 3) Clean common leftovers (best effort)
 $paths = @(
   "$env:LOCALAPPDATA\Microsoft\OneDrive",
   "$env:ProgramData\Microsoft OneDrive",
@@ -129,5 +133,5 @@ foreach ($p in $paths) {
   try { if (Test-Path $p) { Remove-Item $p -Recurse -Force -ErrorAction SilentlyContinue } } catch { }
 }
 
-Write-Host "Debloat completed."
-
+# Optional: return nonzero on catastrophic failure only
+exit 0
